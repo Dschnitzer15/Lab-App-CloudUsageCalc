@@ -5,8 +5,8 @@ FROM gradle:8.1.1-jdk17 AS builder
 WORKDIR /app
 
 # Copy only the gradle build files first to leverage Docker layer caching
-COPY build.gradle settings.gradle ./
-COPY gradle ./gradle
+COPY build.gradle calculator/settings.gradle ./
+COPY calculator/gradle ./gradle
 
 # Download dependencies before copying the entire project
 RUN gradle dependencies --no-daemon
