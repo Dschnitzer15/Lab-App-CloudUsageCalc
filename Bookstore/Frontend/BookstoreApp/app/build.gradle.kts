@@ -59,14 +59,12 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-    //implementation("androidx.activity:activity-compose:1.9.3")
-    //implementation("androidx.compose.ui:ui:1.7.5")
-    //implementation("androidx.compose.material3:material3:1.3.1")
-    implementation ("androidx.compose.ui:ui:1.4.0") // Beispielversion
-    implementation ("androidx.compose.foundation:foundation:1.4.0") // Beispielversion
-    implementation ("androidx.compose.material:material:1.4.0") // Beispielversion
+    implementation ("androidx.compose.ui:ui:1.4.0")
+    implementation ("androidx.compose.foundation:foundation:1.4.0")
+    implementation ("androidx.compose.material:material:1.4.0")
 
-    // Retrofit & Gson-Konverter
+    implementation ("com.squareup.okhttp3:logging-interceptor:4.9.3")
+
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
 

@@ -24,9 +24,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.runtime.*
@@ -38,6 +36,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bookstoreapp.data.model.Book
+import com.example.bookstoreapp.data.model.BookDetails
+import com.example.bookstoreapp.data.model.Review
 import com.example.bookstoreapp.data.network.BookApiClient
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -54,29 +54,25 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun showNotification(context: Context) {
-        // Check for permission if API level is 33 or higher
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ActivityCompat.checkSelfPermission(
                     context,
                     Manifest.permission.POST_NOTIFICATIONS
                 ) != PackageManager.PERMISSION_GRANTED
             ) {
-                // Request permission if it is not granted
                 ActivityCompat.requestPermissions(
                     context as Activity,
                     arrayOf(Manifest.permission.POST_NOTIFICATIONS),
                     1
                 )
-                return  // Exit if permission is not yet granted
+                return
             }
         }
 
-        // Set up Notification Manager and Channel
         val notificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val channelId = "notification_channel"
 
-        // Create Notification Channel if API 26+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 channelId,
@@ -86,7 +82,6 @@ class MainActivity : ComponentActivity() {
             notificationManager.createNotificationChannel(channel)
         }
 
-        // Build and display the notification
         val notification = NotificationCompat.Builder(context, channelId)
             .setContentTitle("Benachrichtigung")
             .setContentText("Du hast die Benachrichtigungen aktiviert!")
@@ -103,25 +98,38 @@ class MainActivity : ComponentActivity() {
     fun BookstoreScreen() {
         var books by remember { mutableStateOf<List<Book>>(emptyList()) }
         var selectedBook by remember { mutableStateOf<Book?>(null) }
+        var bookDetails by remember { mutableStateOf<BookDetails?>(null) }
+        var bookReviews by remember { mutableStateOf<List<Review>>(emptyList()) }
         var isBottomSheetVisible by remember { mutableStateOf(false) }
         var isSettingsVisible by remember { mutableStateOf(false) }
         var notificationsEnabled by remember { mutableStateOf(false) }
-        var darkThemeEnabled by remember { mutableStateOf(false) } // Dark mode state
+        var darkThemeEnabled by remember { mutableStateOf(false) }
 
         val context = LocalContext.current
         val coroutineScope = rememberCoroutineScope()
 
-        // Fetch books from API
+        // Fetch books
         LaunchedEffect(Unit) {
             try {
-                books = BookApiClient.apiService.getBooks()
+                books = BookApiClient.create().getBooks()
             } catch (e: Exception) {
-                // Handle error (e.g., show a toast or a retry button)
                 println("Error loading books: ${e.message}")
             }
         }
 
-        // Dynamischer Theme-Wechsel basierend auf darkThemeEnabled
+        // Fetch book details and reviews when a book is selected
+        LaunchedEffect(selectedBook) {
+            selectedBook?.let { book ->
+                try {
+                    bookDetails = BookApiClient.create().getBookDetails(book.id)
+                    bookReviews = BookApiClient.create().getReviews(book.id)
+                } catch (e: Exception) {
+                    println("Error loading details or reviews: ${e.message}")
+                }
+            }
+        }
+
+        // Main layout for books
         BookstoreAppTheme(darkTheme = darkThemeEnabled) {
             Box(
                 modifier = Modifier
@@ -151,7 +159,7 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                // Settings overlay blocker
+                // Settings overlay
                 if (isSettingsVisible) {
                     Box(
                         modifier = Modifier
@@ -161,7 +169,7 @@ class MainActivity : ComponentActivity() {
                     )
                 }
 
-                // Custom Bottom Sheet (Overlaid above the books)
+                // Book details bottom sheet
                 AnimatedVisibility(
                     visible = isBottomSheetVisible,
                     enter = slideInVertically(initialOffsetY = { it }),
@@ -178,18 +186,12 @@ class MainActivity : ComponentActivity() {
                                 )
                                 .padding(16.dp)
                         ) {
-                            Column(
-                                modifier = Modifier.fillMaxSize()
-                            ) {
-                                BookDetailsContent(book)
-
-                                Spacer(modifier = Modifier.weight(1f))
-                            }
+                            BookDetailsContent(book, bookDetails, bookReviews)
                         }
                     }
                 }
 
-                // Close Button for the Bottom Sheet
+                // Button to close bottom sheet
                 if (isBottomSheetVisible) {
                     Button(
                         onClick = { isBottomSheetVisible = false },
@@ -203,7 +205,7 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                // Settings Button (Fixed at top right corner)
+                // Settings button
                 FloatingActionButton(
                     onClick = { isSettingsVisible = true },
                     modifier = Modifier
@@ -218,7 +220,7 @@ class MainActivity : ComponentActivity() {
                     )
                 }
 
-                // Settings Screen (Slide-in from left)
+                // Settings screen visibility
                 AnimatedVisibility(
                     visible = isSettingsVisible,
                     enter = slideInHorizontally(initialOffsetX = { -it }),
@@ -243,7 +245,6 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-}
 
     @Composable
     fun SettingsScreen(
@@ -299,13 +300,12 @@ class MainActivity : ComponentActivity() {
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                // Größerer "Schließen"-Button
                 Button(
                     onClick = { onClose() },
                     modifier = Modifier
                         .align(Alignment.End)
-                        .height(50.dp)      // Höhe des Buttons
-                        .fillMaxWidth()      // Button nimmt die gesamte Breite ein
+                        .height(50.dp)
+                        .fillMaxWidth()
                 ) {
                     Text("Schließen", fontSize = 18.sp, color = MaterialTheme.colorScheme.onPrimary)
                 }
@@ -327,7 +327,6 @@ class MainActivity : ComponentActivity() {
             content = content
         )
     }
-
 
     @Composable
     fun BookItem(book: Book, onClick: () -> Unit, isBottomSheetVisible: Boolean) {
@@ -351,41 +350,31 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    fun BookDetailsContent(book: Book) {
+    fun BookDetailsContent(book: Book, details: BookDetails?, reviews: List<Review>) {
         Column(
             modifier = Modifier
                 .padding(16.dp)
                 .fillMaxHeight()
-                .padding(bottom = 20.dp) // Padding am unteren Rand für den Button
         ) {
-            Text(
-                text = "Buchdetails",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface // Farbe aus dem Theme
-            )
+            Text(text = "Buchdetails", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
             Spacer(modifier = Modifier.padding(8.dp))
 
-            // Beschreibungen mit dynamischer Farbe und Scrollbarkeit
-            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                Text(
-                    text = "Titel: ${book.title}",
-                    fontSize = 20.sp,
-                    color = MaterialTheme.colorScheme.onSurface // Farbe aus dem Theme
-                )
-                Text(
-                    text = "Autor: ${book.author}",
-                    fontSize = 18.sp,
-                    color = MaterialTheme.colorScheme.onSurface // Farbe aus dem Theme
-                )
-                Text(
-                    text = "Beschreibung: ${book.description}",
-                    fontSize = 16.sp,
-                    color = MaterialTheme.colorScheme.onSurface // Farbe aus dem Theme
-                )
+            Text(text = "Titel: ${book.title}", fontSize = 20.sp, color = MaterialTheme.colorScheme.onSurface)
+            Text(text = "Autor: ${book.author}", fontSize = 18.sp, color = MaterialTheme.colorScheme.onSurface)
+
+            details?.let {
+                Text(text = "Beschreibung: ${it.description}", fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
+                Text(text = "Veröffentlichungsjahr: ${it.publicationYear}", fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
+            }
+            Spacer(modifier = Modifier.padding(8.dp))
+
+            Text(text = "Bewertungen:", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+            reviews.forEach { review ->
+                Text(text = "Rating: ${review.rating} - ${review.reviewText}", fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
             }
         }
     }
+}
 
 
 
