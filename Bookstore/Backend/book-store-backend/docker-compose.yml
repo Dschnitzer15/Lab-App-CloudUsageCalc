@@ -1,0 +1,54 @@
+version: '3.8'
+services:
+  # Traefik reverse proxy
+  traefik:
+    image: traefik:v2.9
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--log.level=DEBUG"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"    # Expose HTTP
+      - "8080:8080" # Traefik dashboard (optional)
+    labels:
+      - "traefik.http.middlewares.strip.stripprefix.prefixes=/list,/reviews,/details"
+      - "traefik.http.middlewares.strip.stripprefix.forceSlash=false"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock" # Allow Traefik to access Docker
+    networks:
+      - web
+
+  # List service
+  list:
+    build: ./books
+    labels:
+      - "traefik.http.routers.list.rule=PathPrefix(`/list`)"
+      - "traefik.http.routers.list.middlewares=strip"
+      - "traefik.http.services.list.loadbalancer.server.port=8080"
+    networks:
+      - web
+
+  # Reviews service
+  reviews:
+    build: ./reviews
+    labels:
+      - "traefik.http.routers.reviews.rule=PathPrefix(`/reviews`)"
+      - "traefik.http.routers.reviews.middlewares=strip"
+      - "traefik.http.services.reviews.loadbalancer.server.port=8080"
+    networks:
+      - web
+
+  # Details service
+  details:
+    build: ./details
+    labels:
+      - "traefik.http.routers.details.rule=PathPrefix(`/details`)"
+      - "traefik.http.routers.details.middlewares=strip"
+      - "traefik.http.services.details.loadbalancer.server.port=8080"
+    networks:
+      - web
+
+networks:
+  web:
+    driver: bridge
