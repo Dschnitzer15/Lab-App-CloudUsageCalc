@@ -8,9 +8,6 @@ WORKDIR /app
 COPY build.gradle settings.gradle ./
 COPY gradle ./gradle
 
-# Download dependencies before copying the entire project
-RUN gradle build --no-daemon || return 0
-
 # Copy the rest of the application code
 COPY . .
 
@@ -26,7 +23,7 @@ WORKDIR /app
 # Copy the built application from the previous stage
 COPY --from=builder /app/build/libs/*.jar app.jar
 
-# Expose the port Spring Boot is running on
+# Expose the port specific to this service
 EXPOSE 8080
 
 # Set the entry point for the container to run the Spring Boot application

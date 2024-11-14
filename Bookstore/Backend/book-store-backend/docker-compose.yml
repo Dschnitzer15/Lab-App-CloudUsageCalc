@@ -19,13 +19,13 @@ services:
     networks:
       - web
 
-  # List service
-  list:
+  # Books service (list of books)
+  books:
     build: ./books
     labels:
-      - "traefik.http.routers.list.rule=PathPrefix(`/list`)"
-      - "traefik.http.routers.list.middlewares=strip"
-      - "traefik.http.services.list.loadbalancer.server.port=8080"
+      - "traefik.http.routers.books.rule=PathPrefix(`/books`)"
+      - "traefik.http.routers.books.middlewares=strip"
+      - "traefik.http.services.books.loadbalancer.server.port=8080"
     networks:
       - web
 
@@ -34,7 +34,7 @@ services:
     build: ./reviews
     labels:
       - "traefik.http.routers.reviews.rule=PathPrefix(`/reviews`)"
-      - "traefik.http.routers.reviews.middlewares=strip"
+      # - "traefik.http.routers.reviews.middlewares=strip"
       - "traefik.http.services.reviews.loadbalancer.server.port=8080"
     networks:
       - web
@@ -44,7 +44,7 @@ services:
     build: ./details
     labels:
       - "traefik.http.routers.details.rule=PathPrefix(`/details`)"
-      - "traefik.http.routers.details.middlewares=strip"
+      # - "traefik.http.routers.details.middlewares=strip"
       - "traefik.http.services.details.loadbalancer.server.port=8080"
     networks:
       - web

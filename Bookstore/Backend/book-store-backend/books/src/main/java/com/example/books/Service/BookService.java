@@ -25,11 +25,8 @@ public class BookService {
                 .map(book -> new BookDto(book.getId(), book.getTitle(), book.getAuthor()))
                 .collect(Collectors.toSet());
     }
-
-    public String getReviews(long id) {
-        return "Reviews for book with ID: " + id;
-    }
 }
+
 
 
 

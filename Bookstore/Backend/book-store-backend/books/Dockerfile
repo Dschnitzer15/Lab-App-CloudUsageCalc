@@ -8,9 +8,6 @@ WORKDIR /app
 COPY build.gradle settings.gradle ./
 COPY gradle ./gradle
 
-# Download dependencies before copying the entire project
-RUN gradle build --no-daemon
-
 # Copy the rest of the application code
 COPY . .
 

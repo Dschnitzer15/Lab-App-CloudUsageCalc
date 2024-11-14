@@ -21,13 +21,9 @@ public class BookController {
         return bookService.getAllBooks();
     }
 
-    @GetMapping("/details/{id}")
+    @GetMapping("/{id}")
     public Optional<BookDto> fetchBook(@PathVariable long id) {
         return bookService.getBook(id);
     }
-
-    @GetMapping("/reviews/{id}")
-    public String fetchBookReviews(@PathVariable long id) {
-        return bookService.getReviews(id);
-    }
 }
+

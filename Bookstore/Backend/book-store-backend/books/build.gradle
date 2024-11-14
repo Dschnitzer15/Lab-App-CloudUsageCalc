@@ -21,7 +21,6 @@ tasks.named('test') {
 	useJUnitPlatform()
 }
 
-// Boot Jar Task, falls nicht automatisch konfiguriert
 bootJar {
 	mainClass = 'com.example.books.BooksApplication'  // Deine Hauptklasse hier angeben
 }

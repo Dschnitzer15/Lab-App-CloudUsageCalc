@@ -11,8 +11,8 @@ public class BookRepositoryImpl implements BookRepository {
     private final Set<Book> books = new HashSet<>();
 
     public BookRepositoryImpl() {
-        books.add(new Book(1L, "Book One", "Author A", "Description of Book One"));
-        books.add(new Book(2L, "Book Two", "Author B", "Description of Book Two"));
+        books.add(new Book(1L, "Book One", "Author A"));
+        books.add(new Book(2L, "Book Two", "Author B"));
     }
 
     @Override
